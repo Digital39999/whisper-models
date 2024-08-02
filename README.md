@@ -1,4 +1,5 @@
 # Whisper Models
+Simple package to download and/or use whisper models in your project, wether for transcription, translation, or any other purpose.
 
 |   Model   |  Disk  |   RAM   |
 |-----------|--------|---------|
@@ -32,3 +33,44 @@ and also add the following line to the `scripts` object depending on the package
     "postinstall": "npx whisper-models -m small"
   }
 }
+
+# Transcription
+```js
+// import whisper from 'whisper-models';
+const whisper = require('whisper-models');
+
+(async () => {
+  const transcription = await whisper('path/to/audio/file.wav', { modelName: 'tiny' });
+  console.log(transcription);
+
+  // or if you want to optimize for speed
+
+  const transcription = await whisper('path/to/audio/file.wav', { modelName: 'tiny', spokenLanguage: 'en' });
+  console.log(transcription);
+})();
+```
+
+# Translation
+```js
+// import whisper from 'whisper-models';
+const whisper = require('whisper-models');
+
+(async () => {
+  const translation = await whisper('path/to/audio/file.wav', { modelName: 'tiny', translateToEnglish: true });
+  console.log(translation);
+})();
+```
+
+# Options
+- `modelName`: The model to use for transcription.
+- `spokenLanguage`: The language spoken in the audio file. Default is `en`.
+- `translateToEnglish`: Whether to translate the transcription to English or not.
+- `threads`: The number of threads to use during computation. Default is `4`.
+- `processors`: The number of processors to use during computation. Default is `1`.
+- `msTimeOffset`: The time offset in milliseconds. Default is `0`.
+- `beamSize`: The beam size. Default is `5`.
+- `samplingTemperature`: The sampling temperature (between 0 and 1). Default is `0`.
+- `incrementOfTemperature`: The increment of temperature (between 0 and 1). Default is `0.2`.
+- `diarization`: Whether to diarize the audio or not. Default is `false`.
+- `maxSegmentLength`: The maximum segment length. Default is `0`.
+- `splitOnWordThanToken`: Whether to split on word than token. Default is `false`.

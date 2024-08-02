@@ -15,11 +15,17 @@ export const ModelListNames = {
 export const ModelList = Object.keys(ModelListNames);
 
 export type IFlagTypes = {
-	threads?: number; // Number of threads to use.
-	processors?: number; // Number of processors to use.
-	translateToEnglish?: boolean; // Translate to English.
-	spokenLanguage?: string; // Spoken language.
-	msTimeOffset?: number; // Millisecond time offset.
+	threads?: number;
+	processors?: number;
+	translateToEnglish?: boolean;
+	spokenLanguage?: string;
+	msTimeOffset?: number;
+	beamSize?: number;
+	samplingTemperature?: number;
+	incrementOfTemperature?: number;
+	diarization?: boolean;
+	maxSegmentLength?: number;
+	splitOnWordThanToken?: boolean;
 }
 
 export type CppCommandTypes = {

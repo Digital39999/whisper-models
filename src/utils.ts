@@ -28,6 +28,17 @@ export function getFlags(flags?: IFlagTypes) {
 	if (flags.translateToEnglish) s += ' -tr';
 	if (flags.spokenLanguage) s += ` -l ${flags.spokenLanguage}`;
 	if (flags.msTimeOffset) s += ` -ot ${flags.msTimeOffset}`;
+	if (flags.beamSize) s += ` -bs ${flags.beamSize}`;
+
+	if (flags.samplingTemperature && (flags.samplingTemperature < 0 || flags.samplingTemperature > 1)) throw new Error('Sampling temperature must be between 0 and 1');
+	if (flags.samplingTemperature) s += ` -tp ${flags.samplingTemperature}`;
+
+	if (flags.incrementOfTemperature && (flags.incrementOfTemperature < 0 || flags.incrementOfTemperature > 1)) throw new Error('Increment of temperature must be between 0 and 1');
+	if (flags.incrementOfTemperature) s += ` -tpi ${flags.incrementOfTemperature}`;
+
+	if (flags.diarization) s += ' -di';
+	if (flags.maxSegmentLength) s += ` -ml ${flags.maxSegmentLength}`;
+	if (flags.splitOnWordThanToken) s += ` -sow ${flags.splitOnWordThanToken}`;
 
 	return s;
 }
