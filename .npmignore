@@ -1,6 +1,8 @@
 pnpm-lock.yaml
+.eslintrc.json
 node_modules
-dist
+.gitignore
+README.md
 
 scripts/whisper
 models/*
