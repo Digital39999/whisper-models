@@ -25,6 +25,21 @@ if %errorlevel% neq 0 (
     echo Python is already installed.
 )
 
+: Create a virtual environment
+if exist "%VENV_DIR%" (
+    echo Removing existing virtual environment...
+    rmdir /s /q "%VENV_DIR%"
+    if %errorlevel% neq 0 call :ErrorExit "Failed to remove existing virtual environment."
+)
+
+echo Creating a virtual environment in the %VENV_DIR% directory...
+python -m venv "%VENV_DIR%"
+if %errorlevel% neq 0 call :ErrorExit "Failed to create virtual environment."
+
+:: Activate the virtual environment
+call "%VENV_DIR%\Scripts\activate.bat"
+if %errorlevel% neq 0 call :ErrorExit "Failed to activate virtual environment."
+
 :: Check if pip is installed
 where pip >nul 2>nul
 if %errorlevel% neq 0 (
@@ -41,21 +56,6 @@ if %errorlevel% neq 0 (
     echo python -m venv is not available. Please ensure Python 3.3+ is installed.
     call :ErrorExit "Failed to verify venv availability."
 )
-
-:: Create a virtual environment
-if exist "%VENV_DIR%" (
-    echo Removing existing virtual environment...
-    rmdir /s /q "%VENV_DIR%"
-    if %errorlevel% neq 0 call :ErrorExit "Failed to remove existing virtual environment."
-)
-
-echo Creating a virtual environment in the %VENV_DIR% directory...
-python -m venv "%VENV_DIR%"
-if %errorlevel% neq 0 call :ErrorExit "Failed to create virtual environment."
-
-:: Activate the virtual environment
-call "%VENV_DIR%\Scripts\activate.bat"
-if %errorlevel% neq 0 call :ErrorExit "Failed to activate virtual environment."
 
 :: Install required Python package in the virtual environment
 echo Installing faster-whisper...
