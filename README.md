@@ -36,15 +36,18 @@ and also add the following line to the `scripts` object of the `package.json` de
 # Transcription
 ```js
 // import whisper from 'whisper-models';
-const whisper = require('whisper-models');
+const Whisper = require('whisper-models');
 
 (async () => {
-  const transcription = await whisper('path/to/audio/file.wav', { modelName: 'tiny' });
+  const whisper = new Whisper('tiny');
+	await whisper.run();
+
+  const transcription = await whisper.sendData('path/to/audio/file.wav');
   console.log(transcription);
 
-  // or if you want to optimize for speed
+  // or if you already know the spoken language
 
-  const transcription = await whisper('path/to/audio/file.wav', { modelName: 'tiny', spokenLanguage: 'en' });
+  const transcription = await whisper.sendData('path/to/audio/file.wav', { spokenLanguage: 'en' });
   console.log(transcription);
 })();
 ```
@@ -52,24 +55,23 @@ const whisper = require('whisper-models');
 # Translation
 ```js
 // import whisper from 'whisper-models';
-const whisper = require('whisper-models');
+const Whisper = require('whisper-models');
 
 (async () => {
-  const translation = await whisper('path/to/audio/file.wav', { modelName: 'tiny', task: 'translate' });
+  const whisper = new Whisper('tiny');
+  await whisper.run();
+
+  const translation = await whisper.sendData('path/to/audio/file.wav', { task: 'translate' });
   console.log(translation);
 })();
 ```
 
 # Options
-- `modelName`: The model to use for transcription.
+- `task`: The task to perform. Default is `transcribe`.
 - `spokenLanguage`: The language spoken in the audio file. Default is `en`.
-- `translateToEnglish`: Whether to translate the transcription to English or not.
-- `threads`: The number of threads to use during computation. Default is `4`.
-- `processors`: The number of processors to use during computation. Default is `1`.
-- `msTimeOffset`: The time offset in milliseconds. Default is `0`.
 - `beamSize`: The beam size. Default is `5`.
-- `samplingTemperature`: The sampling temperature (between 0 and 1). Default is `0`.
-- `incrementOfTemperature`: The increment of temperature (between 0 and 1). Default is `0.2`.
-- `diarization`: Whether to diarize the audio or not. Default is `false`.
+- `temperature`: The sampling temperature (between 0 and 1). Default is `0`.
+- `patience`: The patience for early stopping.
 - `maxSegmentLength`: The maximum segment length. Default is `0`.
-- `splitOnWordThanToken`: Whether to split on word than token. Default is `false`.
+- `compressionRatioThreshold`: The compression ratio threshold.
+- `cuda`: The Nvidia CUDA device to use. Default is `false`.
