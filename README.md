@@ -17,13 +17,11 @@ Simple package to download and/or use whisper models in your project, wether for
 
 # Usage
 
-In your project's `package.json` file, add the following line to the `devDependencies` object like so:
-```json
-{
-  "devDependencies": {
-    "whisper-models": "latest"
-  }
-}
+Install the package using your package manager of choice:
+```bash
+npm install whisper-models
+yarn add whisper-models
+pnpm add whisper-models
 ```
 
 and also add the following line to the `scripts` object depending on the package manager you are using and the model you want to download:
