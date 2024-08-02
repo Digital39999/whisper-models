@@ -74,6 +74,11 @@ mkdir -p "$models_path/$model"
 for file in $files; do
     printf "Downloading %s for model %s from '%s' ...\n" "$file" "$model" "$src"
     
+    if [ -f "$models_path/$model/$file" ]; then
+        printf "File %s already exists. Skipping download.\n" "$file"
+        continue
+    fi
+
     if [ -x "$(command -v wget)" ]; then
         wget --no-config --quiet --show-progress -O "$models_path/$model/$file" "$src-$model/resolve/main/$file"
     elif [ -x "$(command -v curl)" ]; then

@@ -24,13 +24,12 @@ export type IFlagTypes = {
 
 export type CppCommandTypes = {
 	modelName: typeof ModelList[number];
-	filePath: string;
+	fileOrBuffer: string | Buffer;
 	options?: IFlagTypes;
 }
 
-export type IOptions = {
+export type IOptions = IFlagTypes & {
 	modelName: typeof ModelList[number];
-	whisperOptions?: IFlagTypes;
 }
 
 export type WhisperResponse = {

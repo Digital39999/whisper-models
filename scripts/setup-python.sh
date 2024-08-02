@@ -6,6 +6,15 @@ function error_exit {
     exit 1
 }
 
+# Check if a directory argument is provided
+if [ $# -ne 1 ]; then
+    echo "Usage: $0 <SCRIPTS_DIR>"
+    exit 1
+fi
+
+SCRIPTS_DIR="$1"
+VENV_DIR="$SCRIPTS_DIR/venv"
+
 # Check if Python3 is installed
 if ! command -v python3 &>/dev/null; then
     echo "Python3 could not be found. Installing Python3..."
@@ -29,7 +38,6 @@ if ! dpkg -l | grep -q python3-venv; then
 fi
 
 # Create a virtual environment
-VENV_DIR="./venv"
 if [ -d "$VENV_DIR" ]; then
     echo "Removing existing virtual environment..."
     rm -rf "$VENV_DIR" || error_exit "Failed to remove existing virtual environment."
@@ -44,7 +52,7 @@ source "$VENV_DIR/bin/activate" || error_exit "Failed to activate virtual enviro
 
 # Install required Python package in the virtual environment
 echo "Installing faster-whisper..."
-pip install faster-whisper || error_exit "Failed to install faster-whisper."
+pip install faster-whisper pydub || error_exit "Failed to install faster-whisper."
 
 # Deactivate the virtual environment
 echo "Deactivating the virtual environment..."

@@ -7,7 +7,9 @@ import os
 ctranslate2.set_log_level(logging.ERROR)
 
 def transcribe_and_translate(file_path, model_name, options):
-    device = 'cuda' if options.get('cuda', False) else 'cpu'
+    device = 'cpu'
+    if options.get('cuda', False):
+        device = 'cuda'
 
     current_dir = os.path.dirname(os.path.abspath(__file__))
     full_path = os.path.join(current_dir, '..', 'models', model_name)
@@ -21,8 +23,13 @@ def transcribe_and_translate(file_path, model_name, options):
     language = options.get('language', None)
     beam_size = options.get('beam_size', 5)
     patience = options.get('patience', 1)
-    temperature = options.get('temperature', [0.0, 0.2, 0.4, 0.6, 0.8, 1.0])
+    temperature = options.get('temperature', None)
     compression_ratio_threshold = options.get('compression_ratio_threshold', 2.4)
+    
+    if not temperature:
+        temperature = [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]
+    
+    temperature = [temp for temp in temperature if temp is not None]
 
     segments, _ = model.transcribe(
         audio=file_path,
@@ -39,14 +46,14 @@ def transcribe_and_translate(file_path, model_name, options):
 
 def main():
     parser = argparse.ArgumentParser(description="Transcribe and translate audio files using Whisper")
-    parser.add_argument('-f', '--file_path', type=str, required=True, help="Path to the audio file")
-    parser.add_argument('-m', '--model_name', type=str, required=True, help="Name of the model to use")
+    parser.add_argument('-f', '--file-path', type=str, required=True, help="Path to the audio file")
+    parser.add_argument('-m', '--model-name', type=str, required=True, help="Name of the model to use")
     parser.add_argument('--task', choices=['transcribe', 'translate'], default='transcribe', help="Task to perform")
     parser.add_argument('--language', type=str, help="Language spoken in the audio")
-    parser.add_argument('--beam_size', type=int, default=5, help="Beam size for decoding")
+    parser.add_argument('--beam-size', type=int, default=5, help="Beam size for decoding")
     parser.add_argument('--patience', type=float, default=1.0, help="Beam search patience factor")
-    parser.add_argument('--temperature', type=float, default=0.0, help="Temperature for sampling")
-    parser.add_argument('--compression_ratio_threshold', type=float, default=2.4, help="Compression ratio threshold")
+    parser.add_argument('--temperature', type=float, nargs='+', help="Temperature for sampling, e.g., -temperature 0.1 0.2 0.3")
+    parser.add_argument('--compression-ratio-threshold', type=float, default=2.4, help="Compression ratio threshold")
     parser.add_argument('--cuda', action='store_true', help="Use CUDA if available")
 
     args = parser.parse_args()
@@ -64,9 +71,8 @@ def main():
     total_probability = 0
     word_count = 0
 
-
-
     result = transcribe_and_translate(args.file_path, args.model_name, options)
+    
     for segment in result:
         words = segment.words
 		
