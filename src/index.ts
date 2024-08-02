@@ -6,6 +6,9 @@ import { promisify } from 'util';
 import path from 'path';
 import fs from 'fs';
 
+export * from './types';
+export * from './utils';
+
 const execPromise = promisify(exec);
 
 export default async function whisper(filePath: string, options: IOptions): Promise<WhisperResponse> {
@@ -57,7 +60,6 @@ async function convertToWav(inputFilePath: string) {
 		throw error;
 	}
 }
-
 
 async function isSampleRateNot16000(filePath: string) {
 	const { stdout } = await execPromise(`${ffmpegPath} -y -i "${filePath}" 2>&1 | grep "Hz"`);
