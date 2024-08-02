@@ -24,7 +24,7 @@ yarn add whisper-models
 pnpm add whisper-models
 ```
 
-and also add the following line to the `scripts` object depending on the package manager you are using and the model you want to download:
+and also add the following line to the `scripts` object of the `package.json` depending on the package manager you are using and the model you want to download:
 ```json
 {
   "scripts": {
