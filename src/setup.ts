@@ -1,4 +1,4 @@
-import { exec, execSync } from 'child_process';
+import { exec } from 'child_process';
 import { ModelList } from './types';
 import { promisify } from 'util';
 import path from 'path';
@@ -10,7 +10,7 @@ const modelArg = process.argv.find((arg) => arg === '--model' || arg === '-m');
 const modelValue = modelArg ? process.argv[process.argv.indexOf(modelArg) + 1] : null;
 const models = modelValue ? modelValue.split(',') : [];
 
-const invalidModels = models.filter((model) => !ModelList.includes(model));
+const invalidModels = models.filter((model) => !ModelList.includes(model as never));
 
 if (invalidModels.length > 0) {
 	console.error(`Invalid model names: ${invalidModels.join(', ')}`);
@@ -23,11 +23,16 @@ if (invalidModels.length > 0) {
 }
 
 const canRunShell = process.platform !== 'win32';
+const scriptExtension = canRunShell ? '.sh' : '.bat';
 const modelsDir = path.join(__dirname, '..', 'models');
-const doesWhisperExist = fs.existsSync(path.join(__dirname, '..', 'scripts', 'whisper'));
 
-const setup = path.join(__dirname, '..', 'scripts', (canRunShell ? 'setup-whisper.sh' : 'setup-whisper.bat'));
-const script = path.join(__dirname, '..', 'scripts', (canRunShell ? 'download-ggml-model.sh' : 'download-ggml-model.bat'));
+const doesWhisperExist = fs.existsSync(path.join(__dirname, '..', 'scripts', 'whisper'));
+const doesFasterWhisperExist = fs.existsSync(path.join(__dirname, '..', 'scripts', 'whisper.py'));
+
+const setupWhisper = path.join(__dirname, '..', 'scripts', `setup-whisper${scriptExtension}`);
+const setupFasterWhisper = path.join(__dirname, '..', 'scripts', `setup-python${scriptExtension}`);
+const script = path.join(__dirname, '..', 'scripts', `download-ggml-model${scriptExtension}`);
+
 
 if (!fs.existsSync(script)) {
 	console.error('Script not found!');
@@ -48,28 +53,56 @@ const getErrorMessage = (error: unknown): string => {
 	}
 };
 
-// Check if make command is available.
 (async () => {
-	try {
-		execSync(process.platform === 'win32' ? 'where make' : 'which make').toString().trim();
-	} catch (error) {
-		console.error('Make command not found!');
-		process.exit(1);
-	}
-})();
+	await downloadWhisper();
+	await downloadFasterWhisper();
+
+	await Promise.all(models.map(downloadModel));
+});
 
 // Download and compile whisper.cpp if it doesn't exist.
-(async () => {
+async function downloadWhisper() {
 	try {
 		if (!doesWhisperExist) {
-			await execAsync(`chmod +x ${setup}`);
-			await execAsync(setup);
+			await execAsync(`chmod +x ${setupWhisper}`);
+			await execAsync(setupWhisper);
 		}
 	} catch (error) {
 		console.error(`Failed to execute script: ${getErrorMessage(error)}`);
 		process.exit(1);
 	}
-})();
+}
+
+// Download pyhton and faster-whisper if it doesn't exist.
+async function downloadFasterWhisper() {
+	try {
+		if (!doesFasterWhisperExist) {
+			await execAsync(`chmod +x ${setupFasterWhisper}`);
+			const child = exec(setupFasterWhisper);
+
+			child.stdout?.on('data', (data) => {
+				process.stdout.write(data);
+			});
+
+			child.stderr?.on('data', (data) => {
+				process.stderr.write(data);
+			});
+
+			child.on('close', (code) => {
+				if (code !== 0) {
+					console.error(`Script execution failed with code: ${code}`);
+					if (code === 127) console.error('Python not found!');
+					process.exit(1);
+				}
+
+				console.log('Python and faster-whisper are ready!');
+			});
+		}
+	} catch (error) {
+		console.error(`Failed to execute script: ${getErrorMessage(error)}`);
+		process.exit(1);
+	}
+}
 
 // Function to download a single model.
 async function downloadModel(model: string) {
@@ -92,18 +125,10 @@ async function downloadModel(model: string) {
 				return;
 			}
 
-			const modelFile = path.join(modelsDir, `ggml-${model}.bin`);
+			const modelFile = path.join(modelsDir, model, 'model.bin');
 			if (fs.existsSync(modelFile)) {
 				try {
-					const { stdout: makeStdout, stderr: makeStderr } = await execAsync(`make ${modelFile}`);
-					console.log(makeStdout);
-
-					if (makeStderr) {
-						console.error(`Make error: ${makeStderr}`);
-					} else {
-						const relativePath = path.relative(process.cwd(), modelFile);
-						console.log(`Model is ready at: ./${relativePath} (${modelFile})`);
-					}
+					await execAsync(`make ${modelFile}`);
 				} catch (makeError) {
 					console.error(`Failed to run 'make': ${getErrorMessage(makeError)}`);
 				}
@@ -115,8 +140,3 @@ async function downloadModel(model: string) {
 		console.error(`Failed to execute script: ${getErrorMessage(error)}`);
 	}
 }
-
-// Download models in parallel.
-(async () => {
-	await Promise.all(models.map(downloadModel));
-})();

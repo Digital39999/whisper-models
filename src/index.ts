@@ -1,5 +1,5 @@
 import { IOptions, ResponsePart, WhisperResponse } from './types';
-import { createCppCommand } from './utils';
+import { createPythonCommand } from './utils';
 import ffmpegPath from 'ffmpeg-static';
 import { exec } from 'child_process';
 import { promisify } from 'util';
@@ -14,14 +14,14 @@ const execPromise = promisify(exec);
 export default async function whisper(filePath: string, options: IOptions): Promise<WhisperResponse> {
 	await checkAudio(filePath);
 
-	const command = createCppCommand({
+	const command = await createPythonCommand({
 		filePath: path.normalize(filePath),
 		modelName: options.modelName,
 		options: options.whisperOptions,
 	});
 
 	const { stdout, stderr } = await execPromise(command);
-	if (stderr) return { errors: stderr.split('\n').map((e) => e.trim()).filter((e) => e) };
+	if (stderr) throw new Error(stderr);
 	return { data: parseWhisperResponse(stdout) };
 }
 
@@ -70,16 +70,18 @@ async function isSampleRateNot16000(filePath: string) {
 }
 
 function parseWhisperResponse(response: string) {
-	const regex = /\[(\d{2}:\d{2}:\d{2}\.\d{3})\s-->\s(\d{2}:\d{2}:\d{2}\.\d{3})\]\s(.+)/;
+	const regex = /\[(\d+\.\d+s)\s->\s(\d+\.\d+s)\]\s\((\d+\.\d+)%\)\s(.+)/;
 
-	return response.trim()?.split('\n')?.map((l) => {
+	return response.trim().split('\n').map((l) => {
 		const match = l.replaceAll(/\s+/g, ' ').match(regex);
 		if (!match) return null;
 
 		return {
 			start: match[1],
 			end: match[2],
-			text: match[3],
+			certainty: match[3],
+			text: match[4],
 		};
 	}).filter((p) => p) as ResponsePart[];
 }
+

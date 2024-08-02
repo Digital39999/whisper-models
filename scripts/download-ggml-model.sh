@@ -1,46 +1,26 @@
 #!/bin/sh
 
-src="https://huggingface.co/ggerganov/whisper.cpp"
-pfx="resolve/main/ggml"
+src="https://huggingface.co/Systran/faster-whisper"
+files="config.json
+model.bin
+tokenizer.json
+vocabulary.txt"
 
 BOLD="\033[1m"
 RESET='\033[0m'
 
-# get the path of this script
-get_script_path() {
-    if [ -x "$(command -v realpath)" ]; then
-        dirname "$(realpath "$0")"
-    else
-        _ret="$(cd -- "$(dirname "$0")" >/dev/null 2>&1 || exit ; pwd -P)"
-        echo "$_ret"
-    fi
-}
-
-models_path="${2:-$(get_script_path)}"
-
 # Whisper models
 models="tiny
 tiny.en
-tiny-q5_1
-tiny.en-q5_1
 base
 base.en
-base-q5_1
-base.en-q5_1
 small
 small.en
-small.en-tdrz
-small-q5_1
-small.en-q5_1
 medium
 medium.en
-medium-q5_0
-medium.en-q5_0
 large-v1
 large-v2
-large-v2-q5_0
-large-v3
-large-v3-q5_0"
+large-v3"
 
 # list available models
 list_models() {
@@ -55,19 +35,21 @@ list_models() {
         fi
         printf " %s" "$model"
     done
-    printf "\n\n"
+    printf "\n"
 }
 
-if [ "$#" -lt 1 ] || [ "$#" -gt 2 ]; then
-    printf "Usage: %s <model> [models_path]\n" "$0"
+# Check arguments
+if [ "$#" -ne 2 ]; then
+    printf "Usage: %s <model> <output_directory>\n" "$0"
     list_models
     printf "___________________________________________________________\n"
-    printf "${BOLD}.en${RESET} = english-only ${BOLD}-q5_[01]${RESET} = quantized ${BOLD}-tdrz${RESET} = tinydiarize\n"
+    printf "${BOLD}.en${RESET} = english-only\n"
 
     exit 1
 fi
 
 model=$1
+models_path=$2
 
 if ! echo "$models" | grep -q -w "$model"; then
     printf "Invalid model: %s\n" "$model"
@@ -76,36 +58,33 @@ if ! echo "$models" | grep -q -w "$model"; then
     exit 1
 fi
 
-# check if model contains `tdrz` and update the src and pfx accordingly
-if echo "$model" | grep -q "tdrz"; then
-    src="https://huggingface.co/akashmjn/tinydiarize-whisper.cpp"
-    pfx="resolve/main/ggml"
-fi
-
-echo "$model" | grep -q '^"tdrz"*$'
-
-# download ggml model
-
-printf "Downloading ggml model %s from '%s' ...\n" "$model" "$src"
-
-cd "$models_path" || exit
-
-if [ -f "ggml-$model.bin" ]; then
-    printf "Model %s already exists. Skipping download.\n" "$model"
-    exit 0
-fi
-
-if [ -x "$(command -v wget)" ]; then
-    wget --no-config --quiet --show-progress -O ggml-"$model".bin $src/$pfx-"$model".bin
-elif [ -x "$(command -v curl)" ]; then
-    curl -L --output ggml-"$model".bin $src/$pfx-"$model".bin
-else
-    printf "Either wget or curl is required to download models.\n"
+# Check if output directory is valid
+if [ ! -d "$models_path" ]; then
+    printf "Output directory '%s' does not exist.\n" "$models_path"
+    exit 1
+elif [ ! -w "$models_path" ]; then
+    printf "Output directory '%s' is not writable.\n" "$models_path"
     exit 1
 fi
 
-if [ $? -ne 0 ]; then
-    printf "Failed to download ggml model %s \n" "$model"
-    printf "Please try again later or download the original Whisper model files and convert them yourself.\n"
-    exit 1
-fi
+# create model-specific directory
+mkdir -p "$models_path/$model"
+
+# download specified files
+for file in $files; do
+    printf "Downloading %s for model %s from '%s' ...\n" "$file" "$model" "$src"
+    
+    if [ -x "$(command -v wget)" ]; then
+        wget --no-config --quiet --show-progress -O "$models_path/$model/$file" "$src-$model/resolve/main/$file"
+    elif [ -x "$(command -v curl)" ]; then
+        curl -L --output "$models_path/$model/$file" "$src-$model/resolve/main/$file"
+    else
+        printf "Either wget or curl is required to download models.\n"
+        exit 1
+    fi
+
+    if [ $? -ne 0 ]; then
+        printf "Failed to download %s for model %s\n" "$file" "$model"
+        exit 1
+    fi
+done
