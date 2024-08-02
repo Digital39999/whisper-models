@@ -1,0 +1,29 @@
+{
+	"version": "1.0.0",
+	"name": "whisper-models",
+	"author": "Digital39999",
+	"scripts": {
+		"lint": "eslint src --fix --ext .ts",
+		"build": "tsc --build",
+		"watch": "tsc --watch"
+	},
+	"bin": "./dist/setup.js",
+	"repository": "https://github.com/Digital39999/whisper-models",
+	"main": "dist/index.js",
+	"type": "commonjs",
+	"license": "MIT",
+	"devDependencies": {
+		"@types/fluent-ffmpeg": "^2.1.25",
+		"@types/node": "^20.14.13",
+		"@typescript-eslint/eslint-plugin": "^6.18.0",
+		"@typescript-eslint/parser": "^6.18.0",
+		"eslint": "^8.56.0",
+		"typescript": "^5.3.3"
+	},
+	"engines": {
+		"node": ">=20.2.0"
+	},
+	"dependencies": {
+		"ffmpeg-static": "^5.2.0"
+	}
+}
