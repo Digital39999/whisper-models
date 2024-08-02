@@ -31,8 +31,8 @@ const execAsyncRealTime = (cmd: string, onClose: (code: number | null) => void) 
 
 const purgeAll = process.argv.find((arg) => arg === '--purge-all');
 
-const modelArg = process.argv.find((arg) => arg.startsWith('-m'));
-const modelValue = modelArg ? modelArg.split('=')[1] : '';
+const modelArg = process.argv.find((arg) => arg === '--model' || arg === '-m');
+const modelValue = modelArg ? process.argv[process.argv.indexOf(modelArg) + 1] : undefined;
 const models = modelValue ? modelValue.split(',') : [];
 
 const invalidModels = models.filter((model) => !ModelList.includes(model as never));
@@ -43,7 +43,7 @@ if (invalidModels.length > 0 && !purgeAll) {
 } else if (models.length === 0 && !purgeAll) {
 	const help = '| Model     | Disk   | RAM     |\n|-----------|--------|---------|\n| tiny      |  75 MB | ~390 MB |\n| tiny.en   |  75 MB | ~390 MB |\n| base      | 142 MB | ~500 MB |\n| base.en   | 142 MB | ~500 MB |\n| small     | 466 MB | ~1.0 GB |\n| small.en  | 466 MB | ~1.0 GB |\n| medium    | 1.5 GB | ~2.6 GB |\n| medium.en | 1.5 GB | ~2.6 GB |\n| large-v1  | 2.9 GB | ~4.7 GB |\n| large     | 2.9 GB | ~4.7 GB |';
 
-	console.error(`Model name is required!\n\n${help}\n`);
+	console.error(`Model name is required!\n\n${help}\n\nRecieved: ${models.join(', ')} (${modelValue})`);
 	process.exit(1);
 }
 
