@@ -1,66 +1,57 @@
-import { existsSync, promises as fsPromises } from 'fs';
-import { CppCommandTypes, IFlagTypes } from './types';
-import { tmpdir } from 'os';
+import { existsSync, promises as fs } from 'fs';
 import path from 'path';
 
-export async function bufferToFile(buffer: Buffer) {
-	const tempFilePath = path.join(tmpdir(), `audio_${Date.now()}.wav`);
-	await fsPromises.writeFile(tempFilePath, buffer);
-	return tempFilePath;
+export type ConvertToWavOptions = {
+	channels?: number;
+	bitDepth?: number;
+};
+
+export function convertMonoBufferToWav(monoBuffer: Buffer, sampleRate: number, options: ConvertToWavOptions = {}): Buffer {
+	const numChannels = options.channels || 1;
+	const bitDepth = options.bitDepth || 16;
+	const byteRate = sampleRate * numChannels * (bitDepth / 8);
+	const blockAlign = numChannels * (bitDepth / 8);
+
+	const dataChunkSize = monoBuffer.length;
+	const fileSize = 36 + dataChunkSize;
+
+	const wavBuffer = Buffer.alloc(44 + dataChunkSize);
+
+	wavBuffer.write('RIFF', 0);
+	wavBuffer.writeUInt32LE(fileSize, 4); // File size
+	wavBuffer.write('WAVE', 8); // WAVE header
+	wavBuffer.write('fmt ', 12); // fmt chunk
+	wavBuffer.writeUInt32LE(16, 16); // Subchunk1Size for PCM
+	wavBuffer.writeUInt16LE(1, 20); // Audio format (PCM)
+	wavBuffer.writeUInt16LE(numChannels, 22); // Number of channels
+	wavBuffer.writeUInt32LE(sampleRate, 24); // Sample rate
+	wavBuffer.writeUInt32LE(byteRate, 28); // Byte rate
+	wavBuffer.writeUInt16LE(blockAlign, 32); // Block align
+	wavBuffer.writeUInt16LE(bitDepth, 34); // Bits per sample
+	wavBuffer.write('data', 36); // data chunk header
+	wavBuffer.writeUInt32LE(dataChunkSize, 40); // Data size
+
+	monoBuffer.copy(wavBuffer, 44, 0, dataChunkSize);
+
+	return wavBuffer;
 }
 
-export async function createPythonCommand({
-	modelName,
-	fileOrBuffer,
-	options,
-}: CppCommandTypes) {
-	if (typeof fileOrBuffer === 'string' && !existsSync(fileOrBuffer)) throw new Error(`'${fileOrBuffer}' not found!`);
-	else if (!modelName || !existsSync(path.join(__dirname, '..', 'models', modelName, 'model.bin'))) throw new Error(`'${modelName}' not downloaded! Run 'npx whisper-models -m ${modelName}'`);
+export function getDurationFromBuffer(buffer: Buffer, sampleRate: number): number {
+	const bytesPerSample = 2;
+	const numberOfSamples = buffer.length / bytesPerSample;
 
-	const venvDir = path.join(__dirname, '..', 'scripts', 'venv');
-	if (!existsSync(venvDir)) throw new Error('Virtual environment not found!');
-
-	const whisperFile = path.join(__dirname, '..', 'scripts', 'whisper.py');
-	if (!existsSync(whisperFile)) throw new Error('Whisper not found!');
-
-	const venv = {
-		activate: `source ${path.join(venvDir, 'bin', 'activate')}`,
-		deactivate: 'deactivate',
-	};
-
-	const whisperCommand = (path: string) => `${pythonPath} ${whisperFile} ${getFlags(options)} -m "${modelName}" -f "${path}"`;
-	const bashCommand = (command: string) => `bash -c '${venv.activate} && ${command} && ${venv.deactivate}'`;
-
-	const pythonPath = path.join(venvDir, 'bin', 'python3');
-	const tempFilePath = Buffer.isBuffer(fileOrBuffer) ? await bufferToFile(fileOrBuffer) : fileOrBuffer;
-	const command = bashCommand(whisperCommand(tempFilePath));
-
-	return {
-		command,
-		tempFilePath: Buffer.isBuffer(fileOrBuffer) ? tempFilePath : undefined,
-	};
+	return numberOfSamples / sampleRate;
 }
 
-export function getFlags(flags?: IFlagTypes) {
-	if (!flags) return '';
-	let s = '';
+export async function saveWavFile(monoBuffer: Buffer, outputDir: string, sampleRate: number = 48000) {
+	const duration = getDurationFromBuffer(monoBuffer, sampleRate);
+	if (duration < 2) return;
 
-	s += ` --task ${flags.task || 'transcribe'}`;
-	if (flags.spokenLanguage) s += ` --language ${flags.spokenLanguage}`;
-	if (flags.beamSize) s += ` --beam-size ${flags.beamSize}`;
-	if (flags.patience) s += ` --patience ${flags.patience}`;
-	if (flags.temperature) {
-		if (Array.isArray(flags.temperature)) {
-			if (flags.temperature.some((t) => t < 0 || t > 1)) throw new Error('Temperature must be between 0 and 1');
-			else s += ` --temperature ${flags.temperature.join(' ')}`;
-		} else {
-			if (flags.temperature < 0 || flags.temperature > 1) throw new Error('Temperature must be between 0 and 1');
-			else s += ` --temperature ${flags.temperature}`;
-		}
-	}
-	if (flags.compressionRatioThreshold) s += ` --compression-ratio-threshold ${flags.compressionRatioThreshold}`;
-	if (flags.cuda) s += ' --cuda';
+	if (!existsSync(outputDir)) throw new Error('Output directory does not exist.');
 
-	return s;
+	const filePath = path.join(outputDir, `${Date.now()}-${Math.random()}.wav`);
+	const wavData = convertMonoBufferToWav(monoBuffer, sampleRate);
+
+	await fs.writeFile(filePath, wavData);
+	return { filePath, duration };
 }
-

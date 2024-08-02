@@ -12,6 +12,8 @@ export const ModelList = [
 	'large-v3',
 ] as const;
 
+export type ModelType = typeof ModelList[number];
+
 export type IFlagTypes = {
     task?: 'transcribe' | 'translate';
     spokenLanguage?: string;
@@ -23,13 +25,9 @@ export type IFlagTypes = {
 }
 
 export type CppCommandTypes = {
-	modelName: typeof ModelList[number];
+	modelName: ModelType;
 	fileOrBuffer: string | Buffer;
 	options?: IFlagTypes;
-}
-
-export type IOptions = IFlagTypes & {
-	modelName: typeof ModelList[number];
 }
 
 export type WhisperResponse = {
@@ -44,4 +42,34 @@ export type ResponsePart = {
 
 	text: string;
 	certainty: string;
-};
+}
+
+export type SendData = {
+	bufferOrFilePath: string | Buffer;
+	options?: IFlagTypes;
+	isBuffer: boolean;
+}
+
+export type WhisperMessage = {
+	op: 1;
+	data: SendData & {
+		id: number;
+	};
+} | {
+	op: 2;
+	data: {
+		id: number;
+		error: string;
+	};
+} | {
+	op: 3;
+	data: {
+		id: number;
+		segments: ResponsePart[];
+	};
+} | {
+	op: 4;
+	data: {
+		modelReady: boolean;
+	};
+}

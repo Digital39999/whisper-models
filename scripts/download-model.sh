@@ -75,7 +75,7 @@ for file in $files; do
     printf "Downloading %s for model %s from '%s' ...\n" "$file" "$model" "$src"
     
     if [ -f "$models_path/$model/$file" ]; then
-        printf "File %s already exists. Skipping download.\n" "$file"
+        printf "File %s already exists at %s, skipping.\n" "$file" "$models_path/$model"
         continue
     fi
 

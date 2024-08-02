@@ -28,7 +28,7 @@ and also add the following line to the `scripts` object of the `package.json` de
 ```json
 {
   "scripts": {
-    "postinstall": "npx whisper-models -m small"
+    "postinstall": "pnpm whisper-models -m small"
   }
 }
 ```

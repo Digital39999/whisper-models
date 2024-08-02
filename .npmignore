@@ -8,3 +8,4 @@ scripts/whisper
 models/*
 .vscode
 venv
+temp

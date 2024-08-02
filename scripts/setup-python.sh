@@ -52,7 +52,7 @@ source "$VENV_DIR/bin/activate" || error_exit "Failed to activate virtual enviro
 
 # Install required Python package in the virtual environment
 echo "Installing faster-whisper..."
-pip install faster-whisper pydub || error_exit "Failed to install faster-whisper."
+pip install faster-whisper pydub av || error_exit "Failed to install faster-whisper."
 
 # Deactivate the virtual environment
 echo "Deactivating the virtual environment..."

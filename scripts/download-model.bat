@@ -67,7 +67,7 @@ for %%f in (%files%) do (
     echo Downloading %%f for model %model% from '%src%' ...
     
     if exist "%models_path%\%model%\%%f" (
-        echo File %%f already exists. Skipping download.
+        echo File %%f already exists at '%models_path%\%model%', skipping.
         goto :continue
     )
 

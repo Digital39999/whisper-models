@@ -1,52 +1,115 @@
-import { IOptions, ResponsePart, WhisperResponse } from './types';
-import { createPythonCommand } from './utils';
-import { exec } from 'child_process';
-import { promisify } from 'util';
+import { WhisperResponse, ModelType, WhisperMessage, IFlagTypes } from './types';
+import { ChildProcessWithoutNullStreams, spawn } from 'child_process';
+import { existsSync } from 'fs';
 import path from 'path';
-import fs from 'fs';
 
 export * from './types';
 export * from './utils';
 
-const execPromise = promisify(exec);
+export default class Whisper {
+	public isReady = false;
+	private pythonProcess: ChildProcessWithoutNullStreams | null = null;
+	private promises = new Map<number,(response: WhisperResponse) => void>();
 
-export default async function whisper(file: string | Buffer, options: IOptions): Promise<WhisperResponse> {
-	const { command, tempFilePath } = await createPythonCommand({
-		fileOrBuffer: typeof file === 'string' ? path.normalize(file) : file,
-		modelName: options.modelName,
-		options: options,
-	});
+	constructor (readonly modelName: ModelType, readonly device: 'cpu' | 'cuda' = 'cpu') {}
 
-	const { stdout, stderr } = await execPromise(command);
-	if (tempFilePath) fs.unlinkSync(tempFilePath);
+	async run() {
+		const venvDir = path.join(__dirname, '..', 'scripts', 'venv');
+		if (!existsSync(venvDir)) throw new Error('Virtual environment not found!');
 
-	if (stderr) throw new Error(stderr);
-	return { data: parseWhisperResponse(stdout) };
-}
+		const whisperFile = path.join(__dirname, '..', 'scripts', 'whisper.py');
+		if (!existsSync(whisperFile)) throw new Error('Whisper not found!');
 
-export async function rawWhisper(args?: string) {
-	const whisperFile = path.join(__dirname, '..', 'scripts', 'whisper');
-	if (!fs.existsSync(whisperFile)) throw new Error('Whisper not found!');
-
-	const { stdout, stderr } = await execPromise(`${whisperFile} ${args}`);
-	if (stderr) throw new Error(stderr);
-	return stdout;
-}
-
-function parseWhisperResponse(response: string) {
-	console.log(response);
-	const regex = /\[(\d+\.\d+s)\s->\s(\d+\.\d+s)\]\s\((\d+\.\d+)%\)\s(.+)/;
-
-	return response.trim().split('\n').map((l) => {
-		const match = l.replaceAll(/\s+/g, ' ').match(regex);
-		if (!match) return null;
-
-		return {
-			start: match[1],
-			end: match[2],
-			certainty: match[3],
-			text: match[4],
+		const venv = {
+			activate: `source ${path.join(venvDir, 'bin', 'activate')}`,
+			deactivate: 'deactivate',
 		};
-	}).filter((p) => p) as ResponsePart[];
-}
 
+		const whisperCommand = (device: 'cpu' | 'cuda') => `${pythonPath} ${whisperFile} --model ${this.modelName} --device ${device}`;
+		const bashCommand = (command: string) => `bash -c '${venv.activate} && ${command} && ${venv.deactivate}'`;
+
+		const pythonPath = path.join(venvDir, 'bin', 'python3');
+		const command = bashCommand(whisperCommand(this.device));
+
+		this.pythonProcess = spawn('bash', ['-c', command]);
+
+		this.pythonProcess.stdout.on('data', (data) => {
+			const messages = data.toString().trim().split('\n');
+			for (const msg of messages) {
+				if (msg) {
+					try {
+						const response: WhisperMessage = JSON.parse(msg);
+						this.handleResponse(response);
+					} catch (e) {
+						console.error(`Failed to parse response: ${msg}`);
+					}
+				}
+			}
+		});
+
+		this.pythonProcess.stderr.on('data', (data) => {
+			console.error(`Python error: ${data.toString()}`);
+		});
+
+		this.pythonProcess.on('exit', (code) => {
+			console.log(`Python process exited with code ${code}`);
+		});
+
+		this.isReady = true;
+	}
+
+	async sendData(bufferOrFilePath: string | Buffer, options: IFlagTypes = {}) {
+		if (!this.isReady || !this.pythonProcess) {
+			throw new Error('Whisper process is not ready. Make sure to run() first.');
+		}
+
+		if (!bufferOrFilePath) {
+			throw new Error('bufferOrFilePath must not be null or undefined.');
+		}
+
+		const message: WhisperMessage = {
+			op: 1,
+			data: {
+				options,
+				bufferOrFilePath: Buffer.isBuffer(bufferOrFilePath) ? bufferOrFilePath.toString('base64') : bufferOrFilePath,
+				isBuffer: Buffer.isBuffer(bufferOrFilePath),
+				id: Date.now() + Math.random(),
+			},
+		};
+
+		return new Promise<WhisperResponse>((resolve) => {
+			this.promises.set(message.data.id, resolve);
+			this.send(message);
+		});
+	}
+
+	private send(message: WhisperMessage) {
+		if (!this.pythonProcess) throw new Error('Python process is not ready!');
+		this.pythonProcess.stdin.write(JSON.stringify(message) + '\n');
+	}
+
+	private handleResponse(response: WhisperMessage) {
+		const { op, data } = response;
+
+		switch (op) {
+			case 2: {
+				const promise = this.promises.get(data.id);
+				if (!promise) return;
+				promise({ errors: [data.error] });
+				this.promises.delete(data.id);
+				break;
+			}
+			case 3: {
+				const promise = this.promises.get(data.id);
+				if (!promise) return;
+				promise({ data: data.segments });
+				this.promises.delete(data.id);
+				break;
+			}
+			case 4: {
+				this.isReady = data.modelReady;
+				break;
+			}
+		}
+	}
+}

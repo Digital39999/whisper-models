@@ -59,7 +59,7 @@ if %errorlevel% neq 0 call :ErrorExit "Failed to activate virtual environment."
 
 :: Install required Python package in the virtual environment
 echo Installing faster-whisper...
-pip install faster-whisper pydub
+pip install faster-whisper pydub av
 if %errorlevel% neq 0 call :ErrorExit "Failed to install faster-whisper."
 
 :: Deactivate the virtual environment
