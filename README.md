@@ -33,6 +33,7 @@ and also add the following line to the `scripts` object depending on the package
     "postinstall": "npx whisper-models -m small"
   }
 }
+```
 
 # Transcription
 ```js
