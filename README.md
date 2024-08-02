@@ -20,7 +20,7 @@ In your project's `package.json` file, add the following line to the `devDepende
 ```json
 {
   "devDependencies": {
-	  "whisper-models": "latest"
+    "whisper-models": "latest"
   }
 }
 ```
@@ -29,6 +29,6 @@ and also add the following line to the `scripts` object depending on the package
 ```json
 {
   "scripts": {
-	  "postinstall": "npx whisper-models -m small"
+    "postinstall": "npx whisper-models -m small"
   }
 }
