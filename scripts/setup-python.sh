@@ -21,6 +21,7 @@ if ! command -v python3 &>/dev/null; then
 
     # debian based
     if command -v apt-get &>/dev/null; then
+        apt-get update || error_exit "Failed to update package list."
         apt-get install -y python3 || error_exit "Failed to install Python3."
     elif command -v yum &>/dev/null; then
         yum install -y python3 || error_exit "Failed to install Python3."
@@ -34,12 +35,18 @@ fi
 # Check if pip is installed
 if ! command -v pip3 &>/dev/null; then
     echo "pip3 could not be found. Installing pip3..."
-    
+
     # debian based
     if command -v apt-get &>/dev/null; then
-        apt-get install -y python3-pip || error_exit "Failed to install pip3."
+        apt-get install -y python3-pip || {
+            echo "Failed to install pip3 with apt-get. Attempting to install with get-pip.py script..."
+            curl -sS https://bootstrap.pypa.io/get-pip.py | python3 || error_exit "Failed to install pip3 using get-pip.py."
+        }
     elif command -v yum &>/dev/null; then
-        yum install -y python3-pip || error_exit "Failed to install pip3."
+        yum install -y python3-pip || {
+            echo "Failed to install pip3 with yum. Attempting to install with get-pip.py script..."
+            curl -sS https://bootstrap.pypa.io/get-pip.py | python3 || error_exit "Failed to install pip3 using get-pip.py."
+        }
     else
         error_exit "Failed to install pip3. Unsupported package manager. Please install pip3 manually."
     fi
