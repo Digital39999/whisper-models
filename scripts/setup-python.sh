@@ -18,7 +18,15 @@ VENV_DIR="$SCRIPTS_DIR/venv"
 # Check if Python3 is installed
 if ! command -v python3 &>/dev/null; then
     echo "Python3 could not be found. Installing Python3..."
-    sudo apt-get install -y python3 python3-pip python3-venv python3-full || error_exit "Failed to install Python3 and required packages."
+
+    # debian based
+    if command -v apt-get &>/dev/null; then
+        sudo apt-get install -y python3 || error_exit "Failed to install Python3."
+    elif command -v yum &>/dev/null; then
+        sudo yum install -y python3 || error_exit "Failed to install Python3."
+    else
+        error_exit "Failed to install Python3. Unsupported package manager. Please install Python3 manually."
+    fi
 else
     echo "Python3 is already installed."
 fi
@@ -26,7 +34,15 @@ fi
 # Check if pip is installed
 if ! command -v pip3 &>/dev/null; then
     echo "pip3 could not be found. Installing pip3..."
-    sudo apt-get install -y python3-pip || error_exit "Failed to install pip3."
+    
+    # debian based
+    if command -v apt-get &>/dev/null; then
+        sudo apt-get install -y python3-pip || error_exit "Failed to install pip3."
+    elif command -v yum &>/dev/null; then
+        sudo yum install -y python3-pip || error_exit "Failed to install pip3."
+    else
+        error_exit "Failed to install pip3. Unsupported package manager. Please install pip3 manually."
+    fi
 else
     echo "pip3 is already installed."
 fi
@@ -34,7 +50,15 @@ fi
 # Check if python3-venv is installed, and install if missing
 if ! dpkg -l | grep -q python3-venv; then
     echo "python3-venv not found. Installing it..."
-    sudo apt-get install -y python3-venv || error_exit "Failed to install python3-venv."
+
+    # debian based
+    if command -v apt-get &>/dev/null; then
+        sudo apt-get install -y python3-venv || error_exit "Failed to install python3-venv."
+    elif command -v yum &>/dev/null; then
+        sudo yum install -y python3-venv || error_exit "Failed to install python3-venv."
+    else
+        error_exit "Failed to install python3-venv. Unsupported package manager. Please install python3-venv manually."
+    fi
 fi
 
 # Create a virtual environment
