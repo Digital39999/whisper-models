@@ -9,7 +9,7 @@ export const ModelList = [
 	'medium.en',
 	'large-v1',
 	'large-v2',
-	'large',
+	'large-v3',
 ] as const;
 
 export type IFlagTypes = {

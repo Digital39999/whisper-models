@@ -45,7 +45,7 @@ export function getFlags(flags?: IFlagTypes) {
 	if (!flags) return '';
 	let s = '';
 
-	if (flags.task) s += ` --task ${flags.task}`;
+	s += ` --task ${flags.task || 'transcribe'}`;
 	if (flags.spokenLanguage) s += ` --language ${flags.spokenLanguage}`;
 	if (flags.beamSize) s += ` --beam-size ${flags.beamSize}`;
 	if (flags.patience) s += ` --patience ${flags.patience}`;

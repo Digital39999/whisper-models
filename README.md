@@ -13,7 +13,7 @@ Simple package to download and/or use whisper models in your project, wether for
 | medium.en | 1.5 GB | ~2.6 GB |
 | large-v1  | 2.9 GB | ~4.7 GB |
 | large-v2  | 2.9 GB | ~4.7 GB |
-| large     | 2.9 GB | ~4.7 GB |
+| large-v3  | 2.9 GB | ~4.7 GB |
 
 # Usage
 
@@ -44,7 +44,7 @@ const whisper = require('whisper-models');
 
   // or if you want to optimize for speed
 
-  const transcription = await whisper('path/to/audio/file.wav', { modelName: 'tiny', spokenLanguage: 'en' });
+  const transcription = await whisper('path/to/audio/file.wav', { modelName: 'tiny', task: 'translate' });
   console.log(transcription);
 })();
 ```
