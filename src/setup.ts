@@ -31,8 +31,8 @@ const execAsyncRealTime = (cmd: string, onClose: (code: number | null) => void) 
 
 const purgeAll = process.argv.find((arg) => arg === '--purge-all');
 
-const modelArg = process.argv.find((arg) => arg === '--model' || arg === '-m');
-const modelValue = modelArg ? process.argv[process.argv.indexOf(modelArg) + 1] : null;
+const modelArg = process.argv.find((arg) => arg.startsWith('-m'));
+const modelValue = modelArg ? modelArg.split('=')[1] : '';
 const models = modelValue ? modelValue.split(',') : [];
 
 const invalidModels = models.filter((model) => !ModelList.includes(model as never));
