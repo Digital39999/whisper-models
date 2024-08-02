@@ -21,9 +21,9 @@ if ! command -v python3 &>/dev/null; then
 
     # debian based
     if command -v apt-get &>/dev/null; then
-        sudo apt-get install -y python3 || error_exit "Failed to install Python3."
+        apt-get install -y python3 || error_exit "Failed to install Python3."
     elif command -v yum &>/dev/null; then
-        sudo yum install -y python3 || error_exit "Failed to install Python3."
+        yum install -y python3 || error_exit "Failed to install Python3."
     else
         error_exit "Failed to install Python3. Unsupported package manager. Please install Python3 manually."
     fi
@@ -37,9 +37,9 @@ if ! command -v pip3 &>/dev/null; then
     
     # debian based
     if command -v apt-get &>/dev/null; then
-        sudo apt-get install -y python3-pip || error_exit "Failed to install pip3."
+        apt-get install -y python3-pip || error_exit "Failed to install pip3."
     elif command -v yum &>/dev/null; then
-        sudo yum install -y python3-pip || error_exit "Failed to install pip3."
+        yum install -y python3-pip || error_exit "Failed to install pip3."
     else
         error_exit "Failed to install pip3. Unsupported package manager. Please install pip3 manually."
     fi
@@ -53,9 +53,9 @@ if ! dpkg -l | grep -q python3-venv; then
 
     # debian based
     if command -v apt-get &>/dev/null; then
-        sudo apt-get install -y python3-venv || error_exit "Failed to install python3-venv."
+        apt-get install -y python3-venv || error_exit "Failed to install python3-venv."
     elif command -v yum &>/dev/null; then
-        sudo yum install -y python3-venv || error_exit "Failed to install python3-venv."
+        yum install -y python3-venv || error_exit "Failed to install python3-venv."
     else
         error_exit "Failed to install python3-venv. Unsupported package manager. Please install python3-venv manually."
     fi
