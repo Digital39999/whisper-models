@@ -21,29 +21,15 @@ if ! command -v python3 &>/dev/null; then
 
     # debian based
     if command -v apt-get &>/dev/null; then
-        apt-get install -y python3 python3-venv || error_exit "Failed to install Python3 and python3-venv."
+        apt-get install -y python3 || error_exit "Failed to install Python3."
     elif command -v yum &>/dev/null; then
-        yum install -y python3 python3-venv || error_exit "Failed to install Python3 and python3-venv."
+        yum install -y python3 || error_exit "Failed to install Python3."
     else
-        error_exit "Failed to install Python3 and python3-venv. Unsupported package manager. Please install Python3 and python3-venv manually."
+        error_exit "Failed to install Python3. Unsupported package manager. Please install Python3 manually."
     fi
 else
     echo "Python3 is already installed."
 fi
-
-
-# Create a virtual environment
-if [ -d "$VENV_DIR" ]; then
-    echo "Removing existing virtual environment..."
-    rm -rf "$VENV_DIR" || error_exit "Failed to remove existing virtual environment."
-fi
-
-echo "Creating a virtual environment in the $VENV_DIR directory..."
-python3 -m venv "$VENV_DIR" || error_exit "Failed to create virtual environment."
-
-# Activate the virtual environment
-echo "Activating the virtual environment..."
-source "$VENV_DIR/bin/activate" || error_exit "Failed to activate virtual environment."
 
 # Check if pip is installed
 if ! command -v pip3 &>/dev/null; then
@@ -60,6 +46,33 @@ if ! command -v pip3 &>/dev/null; then
 else
     echo "pip3 is already installed."
 fi
+
+# Check if python3-venv is installed, and install if missing
+if ! dpkg -l | grep -q python3-venv; then
+    echo "python3-venv not found. Installing it..."
+
+    # debian based
+    if command -v apt-get &>/dev/null; then
+        apt-get install -y python3-venv || error_exit "Failed to install python3-venv."
+    elif command -v yum &>/dev/null; then
+        yum install -y python3-venv || error_exit "Failed to install python3-venv."
+    else
+        error_exit "Failed to install python3-venv. Unsupported package manager. Please install python3-venv manually."
+    fi
+fi
+
+# Create a virtual environment
+if [ -d "$VENV_DIR" ]; then
+    echo "Removing existing virtual environment..."
+    rm -rf "$VENV_DIR" || error_exit "Failed to remove existing virtual environment."
+fi
+
+echo "Creating a virtual environment in the $VENV_DIR directory..."
+python3 -m venv "$VENV_DIR" || error_exit "Failed to create virtual environment."
+
+# Activate the virtual environment
+echo "Activating the virtual environment..."
+source "$VENV_DIR/bin/activate" || error_exit "Failed to activate virtual environment."
 
 # Install required Python package in the virtual environment
 echo "Installing faster-whisper..."
