@@ -44,7 +44,7 @@ const whisper = require('whisper-models');
 
   // or if you want to optimize for speed
 
-  const transcription = await whisper('path/to/audio/file.wav', { modelName: 'tiny', task: 'translate' });
+  const transcription = await whisper('path/to/audio/file.wav', { modelName: 'tiny', spokenLanguage: 'en' });
   console.log(transcription);
 })();
 ```
@@ -55,7 +55,7 @@ const whisper = require('whisper-models');
 const whisper = require('whisper-models');
 
 (async () => {
-  const translation = await whisper('path/to/audio/file.wav', { modelName: 'tiny', translateToEnglish: true });
+  const translation = await whisper('path/to/audio/file.wav', { modelName: 'tiny', task: 'translate' });
   console.log(translation);
 })();
 ```
