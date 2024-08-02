@@ -21,11 +21,11 @@ if ! command -v python3 &>/dev/null; then
 
     # debian based
     if command -v apt-get &>/dev/null; then
-        apt-get install -y python3 || error_exit "Failed to install Python3."
+        apt-get install -y python3 python3-venv || error_exit "Failed to install Python3 and python3-venv."
     elif command -v yum &>/dev/null; then
-        yum install -y python3 || error_exit "Failed to install Python3."
+        yum install -y python3 python3-venv || error_exit "Failed to install Python3 and python3-venv."
     else
-        error_exit "Failed to install Python3. Unsupported package manager. Please install Python3 manually."
+        error_exit "Failed to install Python3 and python3-venv. Unsupported package manager. Please install Python3 and python3-venv manually."
     fi
 else
     echo "Python3 is already installed."
@@ -59,20 +59,6 @@ if ! command -v pip3 &>/dev/null; then
     fi
 else
     echo "pip3 is already installed."
-fi
-
-# Check if python3-venv is installed, and install if missing
-if ! dpkg -l | grep -q python3-venv; then
-    echo "python3-venv not found. Installing it..."
-
-    # debian based
-    if command -v apt-get &>/dev/null; then
-        apt-get install -y python3-venv || error_exit "Failed to install python3-venv."
-    elif command -v yum &>/dev/null; then
-        yum install -y python3-venv || error_exit "Failed to install python3-venv."
-    else
-        error_exit "Failed to install python3-venv. Unsupported package manager. Please install python3-venv manually."
-    fi
 fi
 
 # Install required Python package in the virtual environment

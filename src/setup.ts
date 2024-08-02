@@ -48,15 +48,15 @@ if (invalidModels.length > 0 && !purgeAll) {
 }
 
 const canRunShell = process.platform !== 'win32';
-const scriptExtension = canRunShell ? '.sh' : '.bat';
+if (!canRunShell) throw new Error('Windows is not supported!');
 
 const modelsDir = path.join(__dirname, '..', 'models');
 const scriptsDir = path.join(__dirname, '..', 'scripts');
 const venvDir = path.join(scriptsDir, 'venv');
 
 const doesPythonVenvExist = fs.existsSync(path.join(__dirname, '..', 'scripts', 'venv'));
-const setupFasterWhisper = path.join(__dirname, '..', 'scripts', `setup-python${scriptExtension}`);
-const script = path.join(__dirname, '..', 'scripts', `download-model${scriptExtension}`);
+const setupFasterWhisper = path.join(__dirname, '..', 'scripts', 'setup-python.sh');
+const script = path.join(__dirname, '..', 'scripts', 'download-model.sh');
 
 if (purgeAll) {
 	if (fs.existsSync(modelsDir)) fs.rmdirSync(modelsDir, { recursive: true });
