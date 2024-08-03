@@ -20,12 +20,15 @@ export default class Whisper {
 		const whisperFile = path.join(__dirname, '..', 'scripts', 'whisper.py');
 		if (!existsSync(whisperFile)) throw new Error('Whisper not found!');
 
+		const modelPath = path.join(__dirname, '..', 'models', this.modelName);
+		if (!existsSync(path.join(modelPath, 'model.bin'))) throw new Error('Model not found!');
+
 		const venv = {
 			activate: `source ${path.join(venvDir, 'bin', 'activate')}`,
 			deactivate: 'deactivate',
 		};
 
-		const whisperCommand = (device: 'cpu' | 'cuda') => `${pythonPath} ${whisperFile} --model ${this.modelName} --device ${device}`;
+		const whisperCommand = (device: 'cpu' | 'cuda') => `${pythonPath} ${whisperFile} --model ${modelPath} --device ${device}`;
 		const bashCommand = (command: string) => `bash -c '${venv.activate} && ${command} && ${venv.deactivate}'`;
 
 		const pythonPath = path.join(venvDir, 'bin', 'python3');
