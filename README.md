@@ -40,7 +40,7 @@ const Whisper = require('whisper-models');
 
 (async () => {
   const whisper = new Whisper('tiny');
-	await whisper.run();
+  await whisper.run();
 
   const transcription = await whisper.sendData('path/to/audio/file.wav');
   console.log(transcription);
