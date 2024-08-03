@@ -72,7 +72,7 @@ mkdir -p "$models_path/$model"
 
 # download specified files
 for file in $files; do
-    printf "Downloading %s for model %s from '%s' ...\n" "$file" "$model" "$src"
+    printf "Downloading %s for model %s from '%s' to '%s'..\n" "$file" "$model" "$src" "$models_path/$model"
     
     if [ -f "$models_path/$model/$file" ]; then
         printf "File %s already exists at %s, skipping.\n" "$file" "$models_path/$model"

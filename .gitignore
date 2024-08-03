@@ -3,7 +3,7 @@ node_modules
 dist
 
 scripts/whisper
-models/*
 .vscode
+models
 venv
 temp

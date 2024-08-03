@@ -11,7 +11,7 @@ export default class Whisper {
 	private pythonProcess: ChildProcessWithoutNullStreams | null = null;
 	private promises = new Map<number,(response: WhisperResponse) => void>();
 
-	constructor (readonly modelName: ModelType, readonly device: 'cpu' | 'cuda' = 'cpu') {}
+	constructor (readonly modelName: ModelType, readonly device: 'cpu' | 'cuda' = 'cpu', private log = false) {}
 
 	async run() {
 		const venvDir = path.join(__dirname, '..', 'scripts', 'venv');
@@ -21,15 +21,17 @@ export default class Whisper {
 		if (!existsSync(whisperFile)) throw new Error('Whisper not found!');
 
 		const modelPath = path.join(__dirname, '..', 'models', this.modelName);
-		if (!existsSync(path.join(modelPath, 'model.bin'))) throw new Error('Model not found!');
+		if (!existsSync(path.join(modelPath, 'model.bin'))) throw new Error(`Model not found at ${modelPath}!`);
 
 		const venv = {
 			activate: `source ${path.join(venvDir, 'bin', 'activate')}`,
 			deactivate: 'deactivate',
 		};
 
-		const whisperCommand = (device: 'cpu' | 'cuda') => `${pythonPath} ${whisperFile} --model ${modelPath} --device ${device}`;
+		const whisperCommand = (device: 'cpu' | 'cuda') => `${pythonPath} "${whisperFile}" --model "${modelPath}" --device ${device}`;
 		const bashCommand = (command: string) => `bash -c '${venv.activate} && ${command} && ${venv.deactivate}'`;
+
+		if (this.log) console.log('[whisper-models]', { venvDir, whisperFile, modelPath, venv });
 
 		const pythonPath = path.join(venvDir, 'bin', 'python3');
 		const command = bashCommand(whisperCommand(this.device));
@@ -70,6 +72,8 @@ export default class Whisper {
 			throw new Error('bufferOrFilePath must not be null or undefined.');
 		}
 
+		if (this.log) console.log('[whisper-models]', { bufferOrFilePath, options });
+
 		const message: WhisperMessage = {
 			op: 1,
 			data: {
@@ -93,6 +97,8 @@ export default class Whisper {
 
 	private handleResponse(response: WhisperMessage) {
 		const { op, data } = response;
+
+		if (this.log) console.log('[whisper-models]', { op, data });
 
 		switch (op) {
 			case 2: {

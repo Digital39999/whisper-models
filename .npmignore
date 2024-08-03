@@ -5,7 +5,7 @@ node_modules
 README.md
 
 scripts/whisper
-models/*
 .vscode
+models
 venv
 temp
